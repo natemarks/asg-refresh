@@ -1,10 +1,10 @@
 package main
 
-import (
-	"fmt"
-	"github.com/natemarks/asg-refresh/version"
-)
-
 func main() {
-	fmt.Println("asg-refresh version: ", version.Version)
+	cfg, err := GetConfig()
+	if err != nil {
+		panic(err)
+	}
+	log := cfg.GetLogger()
+	log.Info().Msgf("config: %+v", cfg)
 }
