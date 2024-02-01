@@ -28,13 +28,13 @@ func (c Config) GetLogger() (log zerolog.Logger) {
 // GetConfig returns the configuration for the application
 func GetConfig() (config Config, err error) {
 	// Define flags
-	filePtr := flag.String("file", "", "Path to the file")
-	updatePtr := flag.Bool("update", false, "update the secret value if it exists")
+	asgPtr := flag.String("asg", "", "substring of the ASG ID: -sandbox-")
+	updatePtr := flag.Bool("update", false, "force instance refresh for the ASG")
 	debugPtr := flag.Bool("debug", false, "Enable debug mode")
 
 	// Parse command line arguments
 	flag.Parse()
-	config.asgID = *filePtr
+	config.asgID = *asgPtr
 	config.update = *updatePtr
 	config.debug = *debugPtr
 
