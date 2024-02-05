@@ -11,6 +11,16 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 )
 
+func TrimASGName(input string) string {
+	index := strings.LastIndex(input, "asg-")
+
+	if index != -1 {
+		return input[:index]
+	}
+
+	return input
+}
+
 // Instance represents an EC2 instance
 type Instance struct {
 	InstanceID string
@@ -33,9 +43,9 @@ type ASGSummary struct {
 func (a *ASGSummary) String() (result string) {
 	for _, instance := range a.Instances {
 		if instance.AmiID != a.ASGAmiID {
-			result = result + fmt.Sprintf("MISMATCH: %s [ %s ] %s -> %s", a.AutoScalingGroupName, instance.InstanceID, instance.AmiID, a.ASGAmiID) + "\n"
+			result = result + fmt.Sprintf("MISMATCH: %s [ %s ] %s -> %s", TrimASGName(a.AutoScalingGroupName), instance.InstanceID, instance.AmiID, a.ASGAmiID) + "\n"
 		} else {
-			result = result + fmt.Sprintf("MATCH: %s [ %s ] %s = %s", a.AutoScalingGroupName, instance.InstanceID, instance.AmiID, a.ASGAmiID) + "\n"
+			result = result + fmt.Sprintf("MATCH: %s [ %s ] %s = %s", TrimASGName(a.AutoScalingGroupName), instance.InstanceID, instance.AmiID, a.ASGAmiID) + "\n"
 		}
 	}
 	return result
