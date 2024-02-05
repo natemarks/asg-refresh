@@ -11,23 +11,34 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 )
 
+// Instance represents an EC2 instance
 type Instance struct {
 	InstanceID string
 	AmiID      string
 }
 
+// String returns a string representation of the instance
 func (i *Instance) String() string {
 	return fmt.Sprintf(" -> InstanceID: %s, AmiID: %s\n", i.InstanceID, i.AmiID)
 }
 
+// ASGSummary represents a summary of an AutoScalingGroup
 type ASGSummary struct {
 	AutoScalingGroupName string
 	ASGAmiID             string
 	Instances            []Instance
 }
 
-func (a *ASGSummary) String() string {
-	return fmt.Sprintf("AutoScalingGroupName: %s, ASGAmiID: %s, Instances: \n%v", a.AutoScalingGroupName, a.ASGAmiID, a.Instances)
+// String returns a string representation of the ASGSummary
+func (a *ASGSummary) String() (result string) {
+	for _, instance := range a.Instances {
+		if instance.AmiID != a.ASGAmiID {
+			result = result + fmt.Sprintf("MISMATCH: %s [ %s ] %s -> %s", a.AutoScalingGroupName, instance.InstanceID, instance.AmiID, a.ASGAmiID) + "\n"
+		} else {
+			result = result + fmt.Sprintf("MATCH: %s [ %s ] %s = %s", a.AutoScalingGroupName, instance.InstanceID, instance.AmiID, a.ASGAmiID) + "\n"
+		}
+	}
+	return result
 }
 
 // ListAutoScalingGroupsWithSubstring returns a list of AutoScalingGroups that contain the given substring
@@ -85,6 +96,32 @@ func GetAmiIDForInstance(instanceID string) (string, error) {
 	return amiID, nil
 }
 
+// GetAMIByLaunchConfigurationName returns the AMI ID for the given launch configuration name
+func GetAMIByLaunchConfigurationName(launchConfigurationName string) (string, error) {
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		return "", err
+	}
+
+	client := autoscaling.NewFromConfig(cfg)
+
+	input := &autoscaling.DescribeLaunchConfigurationsInput{
+		LaunchConfigurationNames: []string{launchConfigurationName},
+	}
+
+	resp, err := client.DescribeLaunchConfigurations(context.TODO(), input)
+	if err != nil {
+		return "", err
+	}
+
+	if len(resp.LaunchConfigurations) == 0 {
+		return "", fmt.Errorf("launch configuration not found: %s", launchConfigurationName)
+	}
+
+	amiID := resp.LaunchConfigurations[0].ImageId
+	return *amiID, nil
+}
+
 // ASGSummaries returns a list of ASGSummary objects for the given list of AutoScalingGroups
 func ASGSummaries(ASGs []types.AutoScalingGroup) (summaries []ASGSummary, err error) {
 	for _, asg := range ASGs {
@@ -99,9 +136,13 @@ func ASGSummaries(ASGs []types.AutoScalingGroup) (summaries []ASGSummary, err er
 				AmiID:      amiID,
 			})
 		}
+		ASGamiID, err := GetAMIByLaunchConfigurationName(*asg.LaunchConfigurationName)
+		if err != nil {
+			return summaries, fmt.Errorf("error getting AMI ID for launch configuration %s: %w", *asg.LaunchConfigurationName, err)
+		}
 		summaries = append(summaries, ASGSummary{
 			AutoScalingGroupName: *asg.AutoScalingGroupName,
-			ASGAmiID:             *asg.LaunchTemplate.LaunchTemplateId,
+			ASGAmiID:             ASGamiID,
 			Instances:            instances,
 		})
 	}

@@ -2,6 +2,8 @@ package awsec2
 
 import (
 	"testing"
+
+	"github.com/aws/aws-sdk-go-v2/service/autoscaling/types"
 )
 
 func TestListAutoScalingGroupsWithSubstring(t *testing.T) {
@@ -32,34 +34,33 @@ func TestListAutoScalingGroupsWithSubstring(t *testing.T) {
 	}
 }
 
-func TestGetAmiIDForInstance(t *testing.T) {
+func TestASGSummaries(t *testing.T) {
+	ASGs, err := ListAutoScalingGroupsWithSubstring("-sandbox-")
+	if err != nil {
+		t.Fatal(err)
+	}
 	type args struct {
-		instanceID string
+		ASGs []types.AutoScalingGroup
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    string
 		wantErr bool
 	}{
 		{
-			name: "Test GetAmiIDForInstance",
+			name: "Test ASGSummaries",
 			args: args{
-				instanceID: "i-0b8a3bd2749a9c238",
+				ASGs: ASGs,
 			},
-			want:    "ami-0b789cb897e3bc975",
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := GetAmiIDForInstance(tt.args.instanceID)
+			_, err := ASGSummaries(tt.args.ASGs)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("GetAmiIDForInstance() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ASGSummaries() error = %v, wantErr %v", err, tt.wantErr)
 				return
-			}
-			if got != tt.want {
-				t.Errorf("GetAmiIDForInstance() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
