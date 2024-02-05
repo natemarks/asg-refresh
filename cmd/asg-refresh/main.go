@@ -7,15 +7,15 @@ import (
 )
 
 func main() {
-	//cfg, err := GetConfig()
-	//if err != nil {
-	//	panic(err)
-	//}
-	cfg := Config{
-		update: true,
-		asgID:  "-sandbox-",
-		debug:  true,
+	cfg, err := GetConfig()
+	if err != nil {
+		panic(err)
 	}
+	//cfg := Config{
+	//	update: true,
+	//	asgID:  "-sandbox-",
+	//	debug:  true,
+	//}
 	log := cfg.GetLogger()
 	log.Info().Msgf("config: %+v", cfg)
 	ASGs, err := awsec2.ListAutoScalingGroupsWithSubstring(cfg.asgID)
