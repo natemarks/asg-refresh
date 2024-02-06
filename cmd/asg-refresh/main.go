@@ -11,14 +11,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	//cfg := Config{
-	//	update: true,
-	//	asgID:  "-sandbox-",
-	//	debug:  true,
-	//}
 	log := cfg.GetLogger()
 	log.Info().Msgf("config: %+v", cfg)
-	ASGs, err := awsec2.ListAutoScalingGroupsWithSubstring(cfg.asgID)
+	ASGs, err := awsec2.ListAutoScalingGroupsWithSubstring(cfg.asgID, &log)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Error getting AutoScalingGroups")
 	}

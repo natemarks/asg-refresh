@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/rs/zerolog"
+
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/autoscaling"
 	"github.com/aws/aws-sdk-go-v2/service/autoscaling/types"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 )
 
+// TrimASGName trims the given string to remove the "asg-" suffix
 func TrimASGName(input string) string {
 	index := strings.LastIndex(input, "asg-")
 
@@ -52,7 +55,7 @@ func (a *ASGSummary) String() (result string) {
 }
 
 // ListAutoScalingGroupsWithSubstring returns a list of AutoScalingGroups that contain the given substring
-func ListAutoScalingGroupsWithSubstring(substring string) ([]types.AutoScalingGroup, error) {
+func ListAutoScalingGroupsWithSubstring(substring string, log *zerolog.Logger) ([]types.AutoScalingGroup, error) {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		return nil, err
@@ -73,6 +76,7 @@ func ListAutoScalingGroupsWithSubstring(substring string) ([]types.AutoScalingGr
 		for _, group := range page.AutoScalingGroups {
 			if strings.Contains(*group.AutoScalingGroupName, substring) {
 				result = append(result, group)
+				log.Debug().Msgf("Found ASG: %s", *group.AutoScalingGroupName)
 			}
 		}
 	}

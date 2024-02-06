@@ -18,9 +18,10 @@ type Config struct {
 // GetLogger returns a logger for the application
 func (c Config) GetLogger() (log zerolog.Logger) {
 	log = zerolog.New(os.Stdout).With().Str("version", version.Version).Timestamp().Logger()
-	log.Level(zerolog.InfoLevel)
+	log = log.Level(zerolog.InfoLevel)
 	if c.debug {
 		log = log.Level(zerolog.DebugLevel)
+		log.Debug().Msg("Debug mode enabled")
 	}
 	return log
 }
